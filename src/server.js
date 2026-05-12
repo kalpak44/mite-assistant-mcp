@@ -1,8 +1,8 @@
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 
-import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
-import { isInitializeRequest } from "@modelcontextprotocol/server";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 
 import { extractBearerToken, tokensMatch } from "./auth.js";
 import { loadConfig } from "./config.js";
@@ -70,7 +70,7 @@ const httpServer = createServer(async (req, res) => {
       transport: null
     };
 
-    const transport = new NodeStreamableHTTPServerTransport({
+    const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       onsessioninitialized: (newSessionId) => {
         sessions.set(newSessionId, { ...session, transport });

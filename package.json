@@ -13,8 +13,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/node": "latest",
-    "@modelcontextprotocol/server": "latest",
-    "zod": "latest"
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.4.3"
   }
 }
