@@ -53,3 +53,11 @@ Who am I in Mite?
 ```text
 Can you tell me my today's Mite entries?
 ```
+
+```text
+Can you update my today's Mite entry about document editing by appending ", project: Demo Project" to its note?
+```
+
+```text
+Create a Mite entry for today using project 1234567 and service 7654321 — we did MCP research, 4 hours.
+```
