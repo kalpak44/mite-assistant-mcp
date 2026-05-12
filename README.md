@@ -12,8 +12,6 @@ This project is intended to let AI assistants interact with the Mite API to:
 
 ## Add To Claude Code
 
-Query your Mite account.
-
 Add the server and authenticate with your Mite API key:
 
 ```bash
@@ -21,12 +19,6 @@ claude mcp add mite-assistant \
   https://mite-assistant.pavel-usanli.online/mcp \
   --transport http \
   --header "Authorization: Bearer YOUR_MITE_API_KEY"
-```
-
-First prompt in Claude Code:
-
-```text
-Who am I in Mite?
 ```
 
 Delete it from Claude Code:
@@ -37,8 +29,6 @@ claude mcp remove mite-assistant
 
 ## Add To Codex
 
-Query your Mite account.
-
 Add the server and authenticate with your Mite API key:
 
 ```bash
@@ -48,14 +38,18 @@ codex mcp add mite-assistant \
   --bearer-token-env-var MITE_API_KEY
 ```
 
-First prompt in Codex:
+Delete it from Codex:
+
+```bash
+codex mcp remove mite-assistant
+```
+
+## Example Prompts
 
 ```text
 Who am I in Mite?
 ```
 
-Delete it from Codex:
-
-```bash
-codex mcp remove mite-assistant
+```text
+Can you tell me my today's Mite entries?
 ```

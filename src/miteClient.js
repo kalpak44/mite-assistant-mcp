@@ -5,6 +5,8 @@ export function createMiteClient(config, apiKey) {
     "X-MiteApiKey": apiKey
   };
 
+  const jsonHeaders = { ...headers, "Content-Type": "application/json" };
+
   async function get(path, params = {}) {
     const url = new URL(buildMiteUrl(config.miteBaseUrl, path));
     for (const [key, value] of Object.entries(params)) {
@@ -29,6 +31,37 @@ export function createMiteClient(config, apiKey) {
 
     if (!response.ok) {
       throw createHttpError(502, `Mite API request failed with status ${response.status}.`);
+    }
+
+    return response.json();
+  }
+
+  async function mutate(method, path, body) {
+    const url = buildMiteUrl(config.miteBaseUrl, path);
+    let response;
+    try {
+      response = await fetch(url, {
+        method,
+        headers: jsonHeaders,
+        body: body !== undefined ? JSON.stringify(body) : undefined
+      });
+    } catch (error) {
+      throw createHttpError(
+        502,
+        `Failed to reach Mite API: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw createHttpError(401, "Unauthorized Mite API key.");
+    }
+
+    if (!response.ok) {
+      throw createHttpError(502, `Mite API request failed with status ${response.status}.`);
+    }
+
+    if (response.status === 204 || response.headers.get("content-length") === "0") {
+      return null;
     }
 
     return response.json();
@@ -66,6 +99,18 @@ export function createMiteClient(config, apiKey) {
     async getUsers() {
       const data = await get("/users.json");
       return Array.isArray(data) ? data.map(item => item.user) : [];
+    },
+
+    async createTimeEntry(fields) {
+      return mutate("POST", "/time_entries.json", { time_entry: fields });
+    },
+
+    async updateTimeEntry(id, fields) {
+      return mutate("PATCH", `/time_entries/${id}.json`, { time_entry: fields });
+    },
+
+    async deleteTimeEntry(id) {
+      return mutate("DELETE", `/time_entries/${id}.json`);
     }
   };
 }
