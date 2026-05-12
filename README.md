@@ -10,3 +10,27 @@ This project is intended to let AI assistants interact with the Mite API to:
 - group time entries for simple reports
 - create new time entries
 
+## Add To Claude Code
+
+Query your Mite account.
+
+Add the server and authenticate with your Mite API key:
+
+```bash
+claude mcp add mite-assistant \
+  https://mite-assistant.pavel-usanli.online/mcp \
+  --transport http \
+  --header "Authorization: Bearer YOUR_MITE_API_KEY"
+```
+
+First prompt in Claude Code:
+
+```text
+Who am I in Mite?
+```
+
+Delete it from Claude Code:
+
+```bash
+claude mcp remove mite-assistant
+```
