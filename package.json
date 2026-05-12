@@ -1,8 +1,8 @@
 {
   "name": "mite-assistant-mcp",
   "version": "0.1.0",
-  "private": true,
-  "description": "Authenticated network MCP server scaffold for Claude Code",
+  "license": "MIT",
+  "description": "MCP server that lets AI assistants query and manage Mite time tracking entries",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
