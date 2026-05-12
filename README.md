@@ -1,6 +1,6 @@
 # mite-assistant-mcp
 
-Java-based MCP server for Mite time tracking.
+JavaScript-based MCP server for Mite time tracking.
 
 ## Purpose
 
