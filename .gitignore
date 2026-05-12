@@ -5,14 +5,19 @@
 *.iws
 out/
 
-# Java build artifacts
-target/
+# Node.js dependencies
+node_modules/
+
+# Build artifacts
+dist/
 build/
-bin/
-*.class
-*.jar
-*.war
-*.ear
+coverage/
+.next/
+.nuxt/
+.svelte-kit/
+.turbo/
+.cache/
+*.tsbuildinfo
 
 # macOS
 .DS_Store
@@ -20,6 +25,10 @@ bin/
 # Logs
 *.log
 logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Environment files
 .env
