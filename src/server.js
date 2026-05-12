@@ -67,6 +67,7 @@ const httpServer = createServer(async (req, res) => {
       apiKey,
       user,
       miteBaseUrl: config.miteBaseUrl,
+      miteClient,
       transport: null
     };
 

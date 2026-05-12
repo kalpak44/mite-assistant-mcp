@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { registerWhoAmITool } from "./tools/whoami.js";
+import { registerListTimeEntriesTool } from "./tools/listTimeEntries.js";
 
 export function createMcpApp(session) {
   const server = new McpServer({
@@ -9,6 +10,7 @@ export function createMcpApp(session) {
   });
 
   registerWhoAmITool(server, session);
+  registerListTimeEntriesTool(server, session);
 
   return server;
 }
