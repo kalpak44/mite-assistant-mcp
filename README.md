@@ -34,3 +34,28 @@ Delete it from Claude Code:
 ```bash
 claude mcp remove mite-assistant
 ```
+
+## Add To Codex
+
+Query your Mite account.
+
+Add the server and authenticate with your Mite API key:
+
+```bash
+export MITE_API_KEY="YOUR_MITE_API_KEY"
+codex mcp add mite-assistant \
+  --url https://mite-assistant.pavel-usanli.online/mcp \
+  --bearer-token-env-var MITE_API_KEY
+```
+
+First prompt in Codex:
+
+```text
+Who am I in Mite?
+```
+
+Delete it from Codex:
+
+```bash
+codex mcp remove mite-assistant
+```
