@@ -10,6 +10,9 @@ name: PR Check
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  # Lets the AI PR agent start this check on a PR branch that never got one —
+  # e.g. a PR opened before this workflow existed.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,4 +32,5 @@ jobs:
         run: npm ci
 
       - name: Build image (no push)
-        run: docker build -t mite-assistant-mcp:pr-${{ github.event.pull_request.number }} .
+        # Tagged from the SHA, not the PR number — there is no PR context on dispatch.
+        run: docker build -t "mite-assistant-mcp:${GITHUB_SHA::7}" .
