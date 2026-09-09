@@ -1,11 +1,11 @@
-import * as z from "zod/v4";
+import * as z from 'zod/v4'
 
 export function registerWhoAmITool(server, session) {
   server.registerTool(
-    "whoami",
+    'whoami',
     {
-      title: "Who Am I",
-      description: "Return the currently authenticated Mite user.",
+      title: 'Who Am I',
+      description: 'Return the currently authenticated Mite user.',
       inputSchema: z.object({}),
       outputSchema: z.object({
         miteBaseUrl: z.string(),
@@ -18,25 +18,25 @@ export function registerWhoAmITool(server, session) {
           role: z.string(),
           language: z.string(),
           created_at: z.string(),
-          updated_at: z.string()
-        })
+          updated_at: z.string(),
+        }),
       }),
       annotations: {
         readOnlyHint: true,
-        idempotentHint: true
-      }
+        idempotentHint: true,
+      },
     },
     async () => ({
       content: [
         {
-          type: "text",
-          text: `${session.user.name} <${session.user.email}> (${session.user.role})`
-        }
+          type: 'text',
+          text: `${session.user.name} <${session.user.email}> (${session.user.role})`,
+        },
       ],
       structuredContent: {
         miteBaseUrl: session.miteBaseUrl,
-        user: session.user
-      }
+        user: session.user,
+      },
     })
-  );
+  )
 }

@@ -1,0 +1,8 @@
+node_modules
+package-lock.json
+
+# .github/workflows/ai-pr-agent.yml, publish.yml and .github/dependabot.yml are generated
+# by homelab-infra's terraform/github/mite-assistant-mcp and rewritten on every apply, so
+# formatting them here is undone by the next `just deploy github mite-assistant-mcp` — and
+# `format:check` would then fail on a tree nobody can fix from this repo.
+.github
