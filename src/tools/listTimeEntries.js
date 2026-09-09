@@ -166,42 +166,44 @@ async function resolveId(id, name, fetchList, label) {
   return matches[0].id
 }
 
+// Every date here is derived in UTC, because fmt() formats with toISOString(). Reading
+// local-time components and then formatting in UTC shifted the month windows by a day for
+// any container east of Greenwich: measured on 2026-09-09 under UTC+2, last_month
+// resolved to 2026-03-31..2026-04-29 instead of the whole of April, and this_month began
+// on the last day of the previous one. The image runs UTC, so UTC is also what a caller
+// gets told the window is.
 function resolveTimeFrame(at) {
   const today = new Date()
   const fmt = (d) => d.toISOString().slice(0, 10)
+  const utc = (year, month, day) => new Date(Date.UTC(year, month, day))
+  const year = today.getUTCFullYear()
+  const month = today.getUTCMonth()
+  const day = today.getUTCDate()
 
   switch (at) {
     case 'today':
       return { at: fmt(today) }
-    case 'yesterday': {
-      const d = new Date(today)
-      d.setDate(d.getDate() - 1)
-      return { at: fmt(d) }
-    }
+    case 'yesterday':
+      return { at: fmt(utc(year, month, day - 1)) }
     case 'this_week': {
-      const dow = today.getDay() || 7
-      const start = new Date(today)
-      start.setDate(today.getDate() - dow + 1)
-      return { from: fmt(start), to: fmt(today) }
+      // getUTCDay() is 0 on Sunday; `|| 7` makes the week Monday-based so a Sunday lands
+      // at the end of its own week rather than starting the next one.
+      const dow = today.getUTCDay() || 7
+      return { from: fmt(utc(year, month, day - dow + 1)), to: fmt(today) }
     }
     case 'last_week': {
-      const dow = today.getDay() || 7
-      const end = new Date(today)
-      end.setDate(today.getDate() - dow)
-      const start = new Date(end)
-      start.setDate(end.getDate() - 6)
-      return { from: fmt(start), to: fmt(end) }
+      const dow = today.getUTCDay() || 7
+      return {
+        from: fmt(utc(year, month, day - dow - 6)),
+        to: fmt(utc(year, month, day - dow)),
+      }
     }
     case 'this_month':
-      return {
-        from: fmt(new Date(today.getFullYear(), today.getMonth(), 1)),
-        to: fmt(today),
-      }
+      return { from: fmt(utc(year, month, 1)), to: fmt(today) }
+    // Day 0 of this month is the last day of the previous one, which avoids naming any
+    // month length.
     case 'last_month':
-      return {
-        from: fmt(new Date(today.getFullYear(), today.getMonth() - 1, 1)),
-        to: fmt(new Date(today.getFullYear(), today.getMonth(), 0)),
-      }
+      return { from: fmt(utc(year, month - 1, 1)), to: fmt(utc(year, month, 0)) }
   }
 }
 
