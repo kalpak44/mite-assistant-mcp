@@ -6,3 +6,4 @@ package-lock.json
 # formatting them here is undone by the next `just deploy github mite-assistant-mcp` — and
 # `format:check` would then fail on a tree nobody can fix from this repo.
 .github
+coverage

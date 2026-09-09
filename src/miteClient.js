@@ -112,13 +112,29 @@ export function createMiteClient(config, apiKey) {
     },
 
     async updateTimeEntry(id, fields) {
-      return mutate('PATCH', `/time_entries/${id}.json`, { time_entry: fields })
+      return mutate('PATCH', timeEntryPath(id), { time_entry: fields })
     },
 
     async deleteTimeEntry(id) {
-      return mutate('DELETE', `/time_entries/${id}.json`)
+      return mutate('DELETE', timeEntryPath(id))
     },
   }
+}
+
+// SonarCloud flags an interpolated request path as injectable (jssecurity:S7044) and it
+// is right to: `id` reaches here from MCP tool arguments. The zod schema on each tool
+// already requires a positive integer, but that schema is one caller away and a second
+// caller would not inherit it, so the boundary re-checks rather than trusting it. Bounding
+// the value to a positive safe integer means the path can only ever contain digits.
+function timeEntryPath(id) {
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw createHttpError(400, `Invalid time entry id: ${JSON.stringify(id)}`)
+  }
+
+  // Re-derived through Number rather than interpolating the argument, so the value that
+  // reaches the template provably originates here and not from the caller. The guard above
+  // already makes them equal; this is what makes that visible to a taint analyser.
+  return `/time_entries/${Number(id).toFixed(0)}.json`
 }
 
 function buildMiteUrl(baseUrl, path) {

@@ -25,4 +25,14 @@ export default defineConfig([
       ],
     },
   },
+  // describe/test/expect and the lifecycle hooks are injected by Jest, so without this
+  // every test file is one long list of no-undef. `jest` itself is imported from
+  // @jest/globals in each test rather than taken from here, because native ESM has no
+  // injected `jest` object.
+  {
+    files: ['test/**/*.js'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.jest },
+    },
+  },
 ])
