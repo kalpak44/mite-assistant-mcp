@@ -223,6 +223,41 @@ describe('mutations', () => {
     await expect(createMiteClient(config, 'k').updateTimeEntry(1, {})).resolves.toBeNull()
   })
 
+  // The id is interpolated into the request path, so anything but a plain positive
+  // integer has to be refused at this boundary rather than trusted from the tool schema
+  // one caller away. A 400 also keeps it distinguishable from a Mite failure.
+  test.each([
+    ['a path traversal string', '1/../../users'],
+    ['a query-string injection', '1?x=y'],
+    ['a negative number', -1],
+    ['zero', 0],
+    ['a float', 1.5],
+    ['NaN', Number.NaN],
+    ['Infinity', Number.POSITIVE_INFINITY],
+    ['undefined', undefined],
+    ['null', null],
+    ['an object', { toString: () => '1' }],
+  ])('refuses %s as a time entry id without calling fetch', async (_label, id) => {
+    const fetchMock = mockFetch({ json: {} })
+    const client = createMiteClient(config, 'k')
+
+    await expect(client.deleteTimeEntry(id)).rejects.toMatchObject({ statusCode: 400 })
+    await expect(client.updateTimeEntry(id, { minutes: 1 })).rejects.toMatchObject({
+      statusCode: 400,
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  test('accepts a large but safe integer id', async () => {
+    const fetchMock = mockFetch({ status: 204 })
+
+    await createMiteClient(config, 'k').deleteTimeEntry(Number.MAX_SAFE_INTEGER)
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://team.mite.de/time_entries/${Number.MAX_SAFE_INTEGER}.json`
+    )
+  })
+
   test.each([401, 403])('maps HTTP %i on a mutation to a 401', async (status) => {
     mockFetch({ status })
 
