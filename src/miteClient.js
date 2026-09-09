@@ -131,7 +131,10 @@ function timeEntryPath(id) {
     throw createHttpError(400, `Invalid time entry id: ${JSON.stringify(id)}`)
   }
 
-  return `/time_entries/${id}.json`
+  // Re-derived through Number rather than interpolating the argument, so the value that
+  // reaches the template provably originates here and not from the caller. The guard above
+  // already makes them equal; this is what makes that visible to a taint analyser.
+  return `/time_entries/${Number(id).toFixed(0)}.json`
 }
 
 function buildMiteUrl(baseUrl, path) {

@@ -8,6 +8,37 @@ import { getSessionId, readJsonBody, sendJson } from './http.js'
 import { createMiteClient } from './miteClient.js'
 import { createMcpApp } from './mcpServer.js'
 
+// Kept at module scope rather than inside the factory below: neither closes over any
+// per-handler state, and nesting them there was flagged as a needless closure per request
+// (javascript:S2004).
+//
+// Every 401 carries the challenge, so a client knows to retry with a bearer token instead
+// of treating it as a hard failure.
+function unauthorized(res, error) {
+  res.setHeader('WWW-Authenticate', 'Bearer realm="mcp"')
+  return sendJson(res, 401, { error })
+}
+
+function reportError(res, error) {
+  console.error(error)
+
+  // Once the transport has started streaming, a second writeHead throws and masks the
+  // original failure. Closing the response is all that is left.
+  if (res.headersSent) {
+    return res.end()
+  }
+
+  // An error with no statusCode is a bug in this server, not a client mistake.
+  const statusCode = typeof error?.statusCode === 'number' ? error.statusCode : 500
+  const message = error instanceof Error ? error.message : 'Internal server error'
+
+  if (statusCode === 401) {
+    return unauthorized(res, message)
+  }
+
+  return sendJson(res, statusCode, { error: message })
+}
+
 // Split out of server.js so the routing, the auth checks and the session lookup can be
 // exercised without binding a port or reaching the Mite API. server.js used to build this
 // closure inline, next to a top-level `loadConfig()` and `listen()`, which meant importing
@@ -28,13 +59,6 @@ export function createRequestHandler(config, deps = {}) {
     makeTransport = (options) => new StreamableHTTPServerTransport(options),
     isInitialize = isInitializeRequest,
   } = deps
-
-  // Every 401 carries the challenge, so a client knows to retry with a bearer token
-  // instead of treating it as a hard failure.
-  function unauthorized(res, error) {
-    res.setHeader('WWW-Authenticate', 'Bearer realm="mcp"')
-    return sendJson(res, 401, { error })
-  }
 
   async function reuseSession(req, res, body, sessionId, apiKey) {
     const existingSession = sessions.get(sessionId)
@@ -121,26 +145,6 @@ export function createRequestHandler(config, deps = {}) {
     }
 
     return openSession(req, res, body, apiKey)
-  }
-
-  function reportError(res, error) {
-    console.error(error)
-
-    // Once the transport has started streaming, a second writeHead throws and masks the
-    // original failure. Closing the response is all that is left.
-    if (res.headersSent) {
-      return res.end()
-    }
-
-    // An error with no statusCode is a bug in this server, not a client mistake.
-    const statusCode = typeof error?.statusCode === 'number' ? error.statusCode : 500
-    const message = error instanceof Error ? error.message : 'Internal server error'
-
-    if (statusCode === 401) {
-      return unauthorized(res, message)
-    }
-
-    return sendJson(res, statusCode, { error: message })
   }
 
   return async function handleRequest(req, res) {
