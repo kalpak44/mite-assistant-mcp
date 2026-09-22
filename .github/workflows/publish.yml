@@ -4,8 +4,8 @@
 # verify -> image -> scan -> deploy. Only the GHCR push and the rollout are conditional,
 # so a dependency PR is fully validated, Dockerfile included, without publishing.
 #
-# ai-pr-agent.yml gates on this file (PR_CHECK_WORKFLOW) and dispatches it for a PR with
-# no checks, so `workflow_dispatch` is load-bearing.
+# ai-maintenance-agent.yml gates on this file (PR_CHECK_WORKFLOW) and dispatches it for a
+# PR with no checks, so `workflow_dispatch` is load-bearing.
 #
 # Renaming this file breaks the deploy that looks it up by name. Action versions are
 # bumped by hand, because Dependabot does not scan a generated file.
@@ -18,6 +18,16 @@ on:
   push:
     branches:
       - main
+    # A sync of the generated agent files must not rebuild the image and roll the cluster.
+    # On `push` only: a pull request whose check never runs is a pull request the agent
+    # will not merge, because it requires a green one. publish.yml is deliberately absent
+    # from the list, so a change to this file still builds and rescans.
+    paths-ignore:
+      - "README.md"
+      - "LICENSE"
+      - ".github/dependabot.yml"
+      - ".github/agent-prompts/**"
+      - ".github/workflows/ai-maintenance-agent.yml"
   workflow_dispatch:
 
 # Cancelling a push to main would leave the image published and the manifests on the old
@@ -30,8 +40,8 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/${{ github.repository }}
   # Pinned so the report cannot change without a commit to attribute it to.
-  SYFT_VERSION: v1.51.1
-  GRYPE_VERSION: v0.118.0
+  SYFT_VERSION: v1.52.0
+  GRYPE_VERSION: v0.119.0
 
 jobs:
   verify:
@@ -224,8 +234,8 @@ jobs:
 
       # Installers are fetched from the release tag, not `main`, and their checksums are
       # verified before anything executes. Piping a moving script straight into a shell
-      # gives an upstream compromise a direct path onto the runner. Bump the two SHA256
-      # values whenever SYFT_VERSION or GRYPE_VERSION moves.
+      # gives an upstream compromise a direct path onto the runner. The version and both
+      # checksums are rewritten together by the weekly sweep that moves these pins.
       - name: Install syft and grype
         env:
           SYFT_INSTALLER_SHA256: ea054f8b6754db17d34129482ecda1ab733cadab57c1c9202bbe98eb5fe18d24
@@ -360,7 +370,7 @@ jobs:
       # A PAT: this job's token cannot dispatch a workflow in another repo.
       GH_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
     steps:
-      # A bot-PR merge publishes its image but holds the rollout; ai-pr-agent.yml
+      # A bot-PR merge publishes its image but holds the rollout; ai-maintenance-agent.yml
       # dispatches one rollout when its sweep ends, so ten merges roll out once.
       # Never hold the publish as well: the scheduled deploy reads the tag from the last
       # successful push run, so every commit on main needs an image behind it.
@@ -377,7 +387,7 @@ jobs:
 
           if [ "$author_type" = "Bot" ]; then
             echo "held=true" >> "$GITHUB_OUTPUT"
-            echo "Rollout held — bot PR merge, the AI PR agent deploys the batch." >> "$GITHUB_STEP_SUMMARY"
+            echo "Rollout held — bot PR merge, the AI maintenance agent deploys the batch." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       # Both inputs are required: this run is still in_progress, so a lookup would
