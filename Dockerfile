@@ -6,8 +6,11 @@
 FROM node:24-alpine
 
 # The Node base ships an older OpenSSL than Alpine has packaged, so start from current
-# packages rather than whenever the base was last rebuilt.
-RUN apk upgrade --no-cache
+# packages rather than whenever the base was last rebuilt. The version constraint is what
+# makes that hold: the gha layer cache would otherwise serve this step from an earlier
+# build for ever, and the upgrade would never reach a published image. CVE-2026-85091.
+RUN apk upgrade --no-cache \
+ && apk add --no-cache 'zlib>=1.3.2-r1'
 
 WORKDIR /app
 
