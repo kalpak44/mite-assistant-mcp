@@ -9,8 +9,10 @@ FROM node:24-alpine
 # packages rather than whenever the base was last rebuilt. The version constraint is what
 # makes that hold: the gha layer cache would otherwise serve this step from an earlier
 # build for ever, and the upgrade would never reach a published image. CVE-2026-85091.
+# The zlib floor also has to move when Alpine publishes a fix: CVE-2026-4738 is fixed
+# in 1.4-r0.
 RUN apk upgrade --no-cache \
- && apk add --no-cache 'zlib>=1.3.2-r1'
+ && apk add --no-cache 'zlib>=1.4-r0'
 
 WORKDIR /app
 
