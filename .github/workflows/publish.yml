@@ -40,8 +40,8 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/${{ github.repository }}
   # Pinned so the report cannot change without a commit to attribute it to.
-  SYFT_VERSION: v1.55.0
-  GRYPE_VERSION: v0.121.0
+  SYFT_VERSION: v1.57.0
+  GRYPE_VERSION: v0.121.2
 
 jobs:
   verify:
@@ -238,14 +238,14 @@ jobs:
       # checksums are rewritten together by the weekly sweep that moves these pins.
       - name: Install syft and grype
         env:
-          SYFT_INSTALLER_SHA256: 787fe2aa12311f7dd8e1d9337dfc6e25f091396c958937293a2d3c0eca2ff8ce
+          SYFT_INSTALLER_SHA256: 2ed88b163a4576521598f9e573bd3d64f39c7b5912a21fb9571a9d604ca64b3b
           GRYPE_INSTALLER_SHA256: 4bc8e844d1ca0b74082cb51e1587d58c35150756954660db3d3078e57c81cbfd
         run: |
           set -euo pipefail
 
           fetch_verified() {
             url="$1"; want="$2"; out="$3"
-            curl --proto '=https' --tlsv1.2 -fsSL "$url" -o "$out"
+            curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-all-errors "$url" -o "$out"
             echo "${want}  ${out}" | sha256sum -c -
           }
 
@@ -256,8 +256,19 @@ jobs:
             "https://raw.githubusercontent.com/anchore/grype/${GRYPE_VERSION}/install.sh" \
             "$GRYPE_INSTALLER_SHA256" grype-install.sh
 
-          sh syft-install.sh -b /usr/local/bin "${SYFT_VERSION}"
-          sh grype-install.sh -b /usr/local/bin "${GRYPE_VERSION}"
+          # The installers fetch release assets themselves, and an occasional 5xx from
+          # GitHub releases would otherwise fail the whole scan on its first attempt.
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "attempt $attempt failed: $*" >&2
+              [ "$attempt" -lt 3 ] && sleep $((attempt * 15))
+            done
+            return 1
+          }
+
+          retry sh syft-install.sh -b /usr/local/bin "${SYFT_VERSION}"
+          retry sh grype-install.sh -b /usr/local/bin "${GRYPE_VERSION}"
 
           syft version
           grype version
