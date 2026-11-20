@@ -10,9 +10,12 @@ FROM node:24-alpine
 # makes that hold: the gha layer cache would otherwise serve this step from an earlier
 # build for ever, and the upgrade would never reach a published image. CVE-2026-85091.
 # The zlib floor also has to move when Alpine publishes a fix: CVE-2026-4738 is fixed
-# in 1.4-r0.
+# in 1.4-r0. The OpenSSL floors likewise pin the fixed 3.5.9-r1 packages for
+# CVE-2026-88822/88823/95691/95692/107496.
 RUN apk upgrade --no-cache \
- && apk add --no-cache 'zlib>=1.4-r0'
+ && apk add --no-cache 'zlib>=1.4-r0' \
+    'libcrypto3>=3.5.9-r1' \
+    'libssl3>=3.5.9-r1'
 
 WORKDIR /app
 
